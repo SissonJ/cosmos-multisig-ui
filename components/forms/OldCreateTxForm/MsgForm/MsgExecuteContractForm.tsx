@@ -196,7 +196,6 @@ console.log(lcd, chain.chainId, contractAddress);
       const encryptionUtils = new EncryptionUtilsImpl(
          lcd,
          new Uint8Array(32),
-         chain.chainId,
       )
       // This encrypts the msg for execution on the Secret Network blockchain
       executeMsg.toAmino(encryptionUtils).then((amino) => {
