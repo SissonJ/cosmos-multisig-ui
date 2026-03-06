@@ -36,8 +36,10 @@ export default function MultisigView() {
           return;
         }
 
+        console.log('0',multisigAddress, chain);
         const newHostedMultisig = await getHostedMultisig(multisigAddress, chain);
 
+        console.log('1',newHostedMultisig);
         // If the multisig is on chain and not on DB, automatically create it on DB and reload the view
         if (newHostedMultisig.hosted === "chain" && newHostedMultisig.accountOnChain?.pubkey) {
           assert(

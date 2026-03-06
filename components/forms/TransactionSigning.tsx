@@ -21,11 +21,11 @@ import { getConnectError } from "../../lib/errorHelpers";
 import HashView from "../dataViews/HashView";
 import Button from "../inputs/Button";
 import StackableContainer from "../layout/StackableContainer";
-import { addressToBytes, EncryptionUtilsImpl, MsgExecuteContract } from "secretjs";
+import { addressToBytes, EncryptionUtilsImpl, MsgExecuteContract, MsgTransfer, SecretNetworkClient } from "secretjs";
 import {decodeB64ToJson} from "../../lib/txMsgHelpers";
 import { MsgExecuteContract as ProtoMsgExecuteContract } from "secretjs/dist/protobuf/secret/compute/v1beta1/msg";
 import {Any} from "secretjs/dist/protobuf/google/protobuf/any";
-import {TxBody} from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import {TxBody, TxRaw} from "cosmjs-types/cosmos/tx/v1beta1/tx";
 
 interface TransactionSigningProps {
   readonly signatures: DbSignatureObj[];
@@ -166,7 +166,16 @@ const TransactionSigning = (props: TransactionSigningProps) => {
             fromAmino: (value) => {
               return value;
             },
-          }
+          },
+          /*["cosmos-sdk/MsgTransfer"]: {
+            aminoType: "cosmos-sdk/MsgTransfer",
+            toAmino: (value) => {
+             return value;
+            },
+            fromAmino: (value) => {
+              return value;
+            },
+          }*/
         }),
       });
 
@@ -191,11 +200,41 @@ const TransactionSigning = (props: TransactionSigningProps) => {
               sent_funds: msg.value.funds,
             },
           });
-        } else {
+        } 
+        /*else if(chain.denom === "uscrt" 
+          && window?.keplr !== undefined
+          && msg.typeUrl === "/ibc.applications.transfer.v1.MsgTransfer"
+        ) {
+          const client = new SecretNetworkClient({
+            chainId: 'secret-4',
+            url: 'https://shade-open-api.lavenderfive.com:443',
+            wallet: offlineSigner,
+            walletAddress: signerAddress,
+          });
+          console.log('HERE', msg.value);
+          console.log(new MsgTransfer({
+            ...msg.value,
+          }));
+          //const result = await client.tx.signTx([new MsgTransfer({
+          //  ...msg.value,
+          //})]);
+          //const result2 = await offlineSigner?.signAmino();
+          console.log("here 2");
+          console.log(result);
+          console.log(TxRaw.decode(result));
+          //offlineSigner.signAmino();
+        }*/
+        else {
           encodeObjects.push(msg);
         }
       }
 
+      console.log('HERE', 
+        signerAddress,
+        encodeObjects,
+        props.tx.fee,
+        props.tx.memo,
+        signerData ); //MsgTransfer.encode(encodeObjects[0].value).finish());
       const { bodyBytes, signatures } = await signingClient.sign(
         signerAddress,
         encodeObjects,
@@ -203,6 +242,7 @@ const TransactionSigning = (props: TransactionSigningProps) => {
         props.tx.memo,
         signerData,
       );
+      console.log(bodyBytes);
 
       // check existing signatures
       const bases64EncodedSignature = toBase64(signatures[0]);

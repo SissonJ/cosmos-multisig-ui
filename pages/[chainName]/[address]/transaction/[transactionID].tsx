@@ -23,6 +23,7 @@ import { getHostedMultisig, isAccount } from "../../../../lib/multisigHelpers";
 import { dbTxFromJson } from "../../../../lib/txMsgHelpers";
 import { MsgExecuteContract as ProtoMsgExecuteContract } from "secretjs/dist/protobuf/secret/compute/v1beta1/msg";
 import {TxRaw} from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import {SecretNetworkClient} from "secretjs";
 
 interface Props {
   props: {
@@ -119,6 +120,7 @@ const TransactionPage = ({
       assert(pubkey, "Pubkey not found on chain or in database");
       assert(txInfo, "Transaction not found in database");
       const bodyBytes = fromBase64(currentSignatures[0].bodyBytes);
+      console.log(bodyBytes, Buffer.from(bodyBytes).toString());
       const signedTxBytes = makeMultisignedTxBytes(
         pubkey,
         txInfo.sequence,
@@ -129,8 +131,6 @@ const TransactionPage = ({
 
       const broadcaster = await StargateClient.connect(chain.nodeAddress);
       const result = await broadcaster.broadcastTx(signedTxBytes);
-      //const client = new SecretNetworkClient({ url: 'https://secretnetwork-api.lavenderfive.com:443/', chainId: chain.chainId });
-      //const result = await client.tx.broadcastSignedTx(signedTxBytes);
       await updateDbTxHash(transactionID, result.transactionHash);
       toastSuccess("Transaction broadcasted with hash", result.transactionHash);
       setTransactionHash(result.transactionHash);

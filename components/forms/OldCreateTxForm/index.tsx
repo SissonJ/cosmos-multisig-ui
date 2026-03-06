@@ -90,6 +90,7 @@ const OldCreateTxForm = ({ router, senderAddress, accountOnChain }: OldCreateTxF
         return;
       }
 
+      console.log('here', accountOnChain);
       const txData: DbTransactionParsedDataJson = {
         accountNumber: accountOnChain.accountNumber,
         sequence: accountOnChain.sequence,
