@@ -38,11 +38,20 @@ const MsgMigrateContractForm = ({
     // eslint-disable-next-line no-shadow
     const { contractAddress, codeId } = trimmedInputs;
 
+    const msgContentUtf8Array = (() => {
+      try {
+        // The JsonEditor does not escape \n or remove whitespaces, so we need to parse + stringify
+        return toUtf8(JSON.stringify(JSON.parse(msgContent)));
+      } catch {
+        return undefined;
+      }
+    })();
+
     const isMsgValid = (): boolean => {
       setContractAddressError("");
       setCodeIdError("");
 
-      if (jsonError.current) {
+      if (jsonError.current || !msgContentUtf8Array) {
         return false;
       }
 
@@ -59,15 +68,6 @@ const MsgMigrateContractForm = ({
 
       return true;
     };
-
-    const msgContentUtf8Array = (() => {
-      try {
-        // The JsonEditor does not escape \n or remove whitespaces, so we need to parse + stringify
-        return toUtf8(JSON.stringify(JSON.parse(msgContent)));
-      } catch {
-        return undefined;
-      }
-    })();
 
     const msgValue = MsgCodecs[MsgTypeUrls.MigrateContract].fromPartial({
       sender: senderAddress,

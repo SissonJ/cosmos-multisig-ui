@@ -62,6 +62,38 @@ const MsgInstantiateContract2Form = ({
     // eslint-disable-next-line no-shadow
     const { codeId, label, adminAddress, salt, customDenom, amount } = trimmedInputs;
 
+    const denom =
+      selectedDenom.value === customDenomOption.value ? customDenom : selectedDenom.value.symbol;
+
+    const microCoin = (() => {
+      try {
+        if (!denom || !amount || amount === "0") {
+          return null;
+        }
+
+        return displayCoinToBaseCoin({ denom, amount }, chain.assets);
+      } catch {
+        return null;
+      }
+    })();
+
+    const hexSalt = (() => {
+      try {
+        return fromHex(salt);
+      } catch {
+        return undefined;
+      }
+    })();
+
+    const msgContentUtf8Array = (() => {
+      try {
+        // The JsonEditor does not escape \n or remove whitespaces, so we need to parse + stringify
+        return toUtf8(JSON.stringify(JSON.parse(msgContent)));
+      } catch {
+        return undefined;
+      }
+    })();
+
     const isMsgValid = (): boolean => {
       setCodeIdError("");
       setLabelError("");
@@ -70,7 +102,7 @@ const MsgInstantiateContract2Form = ({
       setCustomDenomError("");
       setAmountError("");
 
-      if (jsonError.current) {
+      if (jsonError.current || !msgContentUtf8Array) {
         return false;
       }
 
@@ -130,38 +162,6 @@ const MsgInstantiateContract2Form = ({
 
       return true;
     };
-
-    const denom =
-      selectedDenom.value === customDenomOption.value ? customDenom : selectedDenom.value.symbol;
-
-    const microCoin = (() => {
-      try {
-        if (!denom || !amount || amount === "0") {
-          return null;
-        }
-
-        return displayCoinToBaseCoin({ denom, amount }, chain.assets);
-      } catch {
-        return null;
-      }
-    })();
-
-    const hexSalt = (() => {
-      try {
-        return fromHex(salt);
-      } catch {
-        return undefined;
-      }
-    })();
-
-    const msgContentUtf8Array = (() => {
-      try {
-        // The JsonEditor does not escape \n or remove whitespaces, so we need to parse + stringify
-        return toUtf8(JSON.stringify(JSON.parse(msgContent)));
-      } catch {
-        return undefined;
-      }
-    })();
 
     const msgValue = MsgCodecs[MsgTypeUrls.InstantiateContract2].fromPartial({
       sender: senderAddress,

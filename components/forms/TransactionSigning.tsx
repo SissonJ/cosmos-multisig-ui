@@ -1,5 +1,6 @@
 import { DbSignatureObj, DbSignatureObjDraft, DbTransactionParsedDataJson } from "@/graphql";
 import { createDbSignature } from "@/lib/api";
+import { validateBodyBytesMsg } from "@/lib/bodyBytesValidation";
 import { getKeplrAminoSigner, getKeplrKey, useKeplrReconnect } from "@/lib/keplr";
 import { aminoConverters } from "@/lib/msg";
 import { toastError, toastSuccess } from "@/lib/utils";
@@ -203,6 +204,13 @@ const TransactionSigning = (props: TransactionSigningProps) => {
         props.tx.memo,
         signerData,
       );
+
+      const bodyBytesError = validateBodyBytesMsg(bodyBytes);
+      if (bodyBytesError) {
+        throw new Error(
+          `Signing produced invalid transaction data: ${bodyBytesError} Please retry — this is usually caused by a temporary network issue in the wallet.`,
+        );
+      }
 
       // check existing signatures
       const bases64EncodedSignature = toBase64(signatures[0]);
