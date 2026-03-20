@@ -93,12 +93,42 @@ console.log(lcd, chain.chainId, contractAddress);
     const denom =
       selectedDenom.value === customDenomOption.value ? customDenom : selectedDenom.value.symbol;
 
+    const microCoin = (() => {
+      try {
+        if (!denom || !amount || amount === "0") {
+          return null;
+        }
+
+        return displayCoinToBaseCoin({ denom, amount }, chain.assets);
+      } catch {
+        return null;
+      }
+    })();
+
+    const msgContentUtf8Array = (() => {
+      try {
+        // The JsonEditor does not escape \n or remove whitespaces, so we need to parse + stringify
+        return toUtf8(JSON.stringify(JSON.parse(msgContent)));
+      } catch {
+        return undefined;
+      }
+    })();
+
+    const msgContentJSON = (() => {
+      try {
+        // The JsonEditor does not escape \n or remove whitespaces, so we need to parse + stringify
+        return JSON.parse(msgContent);
+      } catch {
+        return undefined;
+      }
+    })();
+
     const isMsgValid = (): boolean => {
       setContractAddressError("");
       setCustomDenomError("");
       setAmountError("");
 
-      if (jsonError.current) {
+      if (jsonError.current || !msgContentUtf8Array) {
         return false;
       }
 
@@ -139,36 +169,6 @@ console.log(lcd, chain.chainId, contractAddress);
 
       return true;
     };
-
-    const microCoin = (() => {
-      try {
-        if (!denom || !amount || amount === "0") {
-          return null;
-        }
-
-        return displayCoinToBaseCoin({ denom, amount }, chain.assets);
-      } catch {
-        return null;
-      }
-    })();
-
-    const msgContentUtf8Array = (() => {
-      try {
-        // The JsonEditor does not escape \n or remove whitespaces, so we need to parse + stringify
-        return toUtf8(JSON.stringify(JSON.parse(msgContent)));
-      } catch {
-        return undefined;
-      }
-    })();
-
-    const msgContentJSON = (() => {
-      try {
-        // The JsonEditor does not escape \n or remove whitespaces, so we need to parse + stringify
-        return JSON.parse(msgContent);
-      } catch {
-        return undefined;
-      }
-    })();
 
     let msgValue = MsgCodecs[MsgTypeUrls.ExecuteContract].fromPartial({
       sender: senderAddress,

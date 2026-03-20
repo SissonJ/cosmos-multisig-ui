@@ -2,6 +2,7 @@ import { isChainInfoFilled } from "@/context/ChainsContext/helpers";
 import { DbSignatureObj } from "@/graphql";
 import { getTransaction } from "@/graphql/transaction";
 import { updateDbTxHash } from "@/lib/api";
+import { validateBodyBytesMsg } from "@/lib/bodyBytesValidation";
 import { toastError, toastSuccess } from "@/lib/utils";
 import { MultisigThresholdPubkey } from "@cosmjs/amino";
 import { fromBase64 } from "@cosmjs/encoding";
@@ -119,6 +120,12 @@ const TransactionPage = ({
       assert(pubkey, "Pubkey not found on chain or in database");
       assert(txInfo, "Transaction not found in database");
       const bodyBytes = fromBase64(currentSignatures[0].bodyBytes);
+
+      const bodyBytesError = validateBodyBytesMsg(bodyBytes);
+      if (bodyBytesError) {
+        throw new Error(bodyBytesError);
+      }
+
       const signedTxBytes = makeMultisignedTxBytes(
         pubkey,
         txInfo.sequence,
