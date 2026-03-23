@@ -197,14 +197,36 @@ console.log(lcd, chain.chainId, contractAddress);
          lcd,
          new Uint8Array(32),
       )
-      // This encrypts the msg for execution on the Secret Network blockchain
+
+      let cancelled = false;
+
+      // Encrypt the msg, then set the msgGetter only after encryption succeeds
       executeMsg.toAmino(encryptionUtils).then((amino) => {
+        if (cancelled) return;
         // @ts-expect-error secret needs the same encrypted msg to be signed everywhere
         msgValue.encryptedMsg = amino.value.msg;
+        const msg: MsgExecuteContractEncodeObject = {
+          typeUrl: MsgTypeUrls.ExecuteContract,
+          value: msgValue,
+        };
+        setMsgGetter({ isMsgValid, msg });
+      }).catch((e) => {
+        if (cancelled) return;
+        console.error("Failed to encrypt Secret Network msg:", e);
+        // Set a msgGetter that always reports invalid so the tx can't be created
+        setMsgGetter({
+          isMsgValid: () => {
+            setContractAddressError(
+              `Failed to encrypt message: ${e instanceof Error ? e.message : "Unknown error"}. Check your LCD URL and code hash.`,
+            );
+            return false;
+          },
+          msg: { typeUrl: MsgTypeUrls.ExecuteContract, value: msgValue },
+        });
       });
-      msgValue = {
-        ...msgValue,
-      };
+
+      // Cancel stale encryption callbacks when this effect re-runs
+      return () => { cancelled = true; };
     }
 
     const msg: MsgExecuteContractEncodeObject = {
